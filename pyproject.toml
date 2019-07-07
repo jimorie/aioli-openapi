@@ -8,13 +8,12 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.6"
-aioli = { git = "https://github.com/aioli-framework/aioli.git", branch = "devel" }
+aioli = "^0.3.0"
 apispec = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
 twine = "^1.13"
 sphinx = "^2.1.1"
-# aioli_sphinx_theme = { git = "https://github.com/aioli-framework/aioli-sphinx-theme.git", branch = "master" }
 sphinxcontrib-httpdomain = "^1.7.0"
 pytest = "^4.4.0"
 pytest-cov = "^2.7.1"
