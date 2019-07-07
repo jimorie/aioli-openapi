@@ -2,14 +2,15 @@ from aioli.utils import jsonify
 
 from aioli.controller import (
     BaseHttpController,
-    ParamsSchema,
     Method,
+    schemas,
     route,
     takes,
+    returns,
 )
 
 from .service import OpenApiService
-from .schema import PathSchema
+from .schema import OpenApiPath
 
 
 class HttpController(BaseHttpController):
@@ -17,14 +18,14 @@ class HttpController(BaseHttpController):
         super(HttpController, self).__init__(pkg)
         self.openapi = OpenApiService(pkg)
 
-    @route("/", Method.GET, "List of OAS-compatible Schemas")
-    @takes(query=ParamsSchema)
+    @route("/", Method.GET, "List of OAS3 Schemas")
+    @takes(query=schemas.HttpParams)
+    @returns(status=200, many=True)
     async def packages_get(self, query):
-        data = await self.openapi.get_schemas(**query)
-        return jsonify(data, status=200)
+        return await self.openapi.get_schemas(**query)
 
-    @route("/{package_name}", Method.GET, "Single OAS-compatible Schema for a Package")
-    @takes(path=PathSchema)
+    @route("/{package_name}", Method.GET, "Single OAS3 Schema for a Package")
+    @takes(path=OpenApiPath)
+    @returns(status=200)
     async def package_get(self, package_name):
-        data = await self.openapi.get_schema(package_name)
-        return jsonify(data, status=200)
+        return await self.openapi.get_schema(package_name)

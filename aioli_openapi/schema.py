@@ -1,5 +1,5 @@
-from aioli.controller.schema import fields, Schema
+from aioli.controller.schemas import fields, Schema
 
 
-class PathSchema(Schema):
+class OpenApiPath(Schema):
     package_name = fields.String()

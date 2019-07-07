@@ -1,3 +1,5 @@
+import warnings
+
 from apispec import APISpec
 from apispec.ext.marshmallow import MarshmallowPlugin
 
@@ -5,62 +7,82 @@ from aioli.service import BaseService
 from aioli.controller import BaseHttpController
 from aioli.exceptions import NoMatchFound
 
-from ._apispec import OpenApi
-
 
 class OpenApiService(BaseService):
-    schemas = {}
+    _specs = {}
 
-    async def on_startup(self):
-        for pkg, module in self.app.registry.imported.values():
-            if not pkg.config["path"]:
-                continue
-
-            spec = APISpec(
-                title=pkg.name.capitalize(),
-                version=pkg.version,
-                openapi_version="3.0.2",
-                plugins=[MarshmallowPlugin()],
-            )
-
-            # spec = OpenApi(pkg)
-            # print(self.spec.components.schema('User', schema=pkg))
-
-            for ctrl in pkg.controllers:
-                if not isinstance(ctrl, BaseHttpController):
-                    continue
-
-                for handler, route_stack in ctrl.stacks:
-                    response = route_stack.schemas.response
-
-                    from aioli.controller import schema
-
-                    if issubclass(response, schema.Schema):
-                        print(response)
-                        spec.components.schema("Hej", schema=response())
-
-            # self.schemas[pkg.name] = spec.schema
-
-    async def get_schemas(self, **query):
-        return self.schemas.values()
-
-    async def get_schema(self, name):
-        """schemas = dict(self.schemas)
-        if name not in schemas:
-            raise NoMatchFound
-
+    def oas_schema(self, pkg):
         spec = APISpec(
-            title="Swagger Petstore",
-            version="1.0.0",
-            openapi_version="3.0.2",
+            title=pkg.name.capitalize(),
+            version=pkg.version,
+            openapi_version=self.config["oas_version"],
             plugins=[MarshmallowPlugin()],
         )
 
-        # spec.components.schema('User', schema=schemas[name])
+        for ctrl in pkg.controllers:
+            if not isinstance(ctrl, BaseHttpController):
+                continue
 
-        # print(spec.to_dict()["definitions"])
-        print(schemas[name])"""
+            routes = {}
 
-        # return schemas[name]
-        # print(self.schemas)
-        return {}
+            for func, handler in ctrl.handlers:
+                if not handler.status:
+                    warnings.warn(f"No @returns for {func}, cannot generate OAS3 schema for this handler")
+                    break
+
+                abspath = handler.path_full
+                method = handler.method.lower()
+
+                if abspath not in routes:
+                    routes[abspath] = {}
+
+                if method not in routes[abspath]:
+                    routes[abspath][method] = dict(
+                        responses={},
+                        parameters=[]
+                    )
+
+                route = routes[abspath][method]
+                responses = route["responses"]
+                parameters = route["parameters"]
+
+                for location, schema_cls in handler.schemas:
+                    if location == "response":
+                        if not schema_cls:
+                            content = {}
+                        else:
+                            content = {"application/json": {"schema": schema_cls}}
+
+                        responses[handler.status] = dict(
+                            description="hello",
+                            content=content
+                        )
+                    elif location in ["path", "query", "header"]:
+                        if not schema_cls:
+                            continue
+
+                        parameters.append({
+                            "in": location,
+                            "schema": schema_cls
+                        })
+
+                spec.path(handler.path_full, operations=routes[abspath])
+
+        return spec.to_dict()
+
+    async def on_startup(self):
+        for module in self.app.registry.imported:
+            pkg = module.export
+            if not pkg.config["path"]:
+                continue
+
+            self._specs[pkg.name] = self.oas_schema(pkg)
+
+    async def get_schemas(self, **query):
+        return self._specs
+
+    async def get_schema(self, name):
+        if name not in self._specs:
+            raise NoMatchFound
+
+        return self._specs[name]
