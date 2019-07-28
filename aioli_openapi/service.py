@@ -71,8 +71,7 @@ class OpenApiService(BaseService):
         return spec.to_dict()
 
     async def on_startup(self):
-        for module in self.app.registry.imported:
-            pkg = module.export
+        for pkg in self.app.registry.imported:
             if not pkg.config["path"]:
                 continue
 
