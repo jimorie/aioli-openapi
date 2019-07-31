@@ -13,8 +13,8 @@ class OpenApiService(BaseService):
 
     def oas_schema(self, pkg):
         spec = APISpec(
-            title=pkg.name.capitalize(),
-            version=pkg.version,
+            title=pkg.meta["name"].capitalize(),
+            version=pkg.meta["version"],
             openapi_version=self.config["oas_version"],
             plugins=[MarshmallowPlugin()],
         )
@@ -54,7 +54,7 @@ class OpenApiService(BaseService):
                             content = {"application/json": {"schema": schema_cls}}
 
                         responses[handler.status] = dict(
-                            description="hello",
+                            description=None,
                             content=content
                         )
                     elif location in ["path", "query", "header"]:
@@ -75,7 +75,7 @@ class OpenApiService(BaseService):
             if not pkg.config["path"]:
                 continue
 
-            self._specs[pkg.name] = self.oas_schema(pkg)
+            self._specs[pkg.meta["name"]] = self.oas_schema(pkg)
 
     async def get_schemas(self, **query):
         return self._specs
