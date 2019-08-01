@@ -9,7 +9,7 @@ homepage = "https://github.com/aioli-framework/aioli-openapi"
 
 [tool.poetry.dependencies]
 python = "^3.6"
-aioli = "^0.3.0"
+aioli = "^0.4.0"
 apispec = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
