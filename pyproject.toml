@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aioli_openapi"
-version = "0.1.6"
+version = "0.1.7"
 description = "Generate OpenAPI schemas using Aioli Handlers"
 authors = ["Robert Wikman <rbw@vault13.org>"]
 license = "MIT"
@@ -10,7 +10,7 @@ keywords = ["aioli_package"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
-aioli = "*"
+aioli = "^0.4.5"
 apispec = "^2.0.1"
 
 [tool.poetry.dev-dependencies]
